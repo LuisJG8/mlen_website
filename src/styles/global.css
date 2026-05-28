@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: Arial, Helvetica, sans-serif;
+  --color-ink: #0a1020;
+  --color-muted: #51627f;
+  --color-sky-line: #d8e4f8;
+  --color-surface: #f4f8ff;
+  --color-mint: #dce8ff;
+  --color-leaf: #0f62fe;
+  --color-leaf-dark: #0017a7;
+  --color-amber: #79b8ff;
+  --color-gold: #0f62fe;
+  --color-gold-dark: #0017a7;
+  --shadow-soft: 0 24px 70px rgba(10, 16, 32, 0.08);
+  --shadow-card: 0 14px 40px rgba(10, 16, 32, 0.08);
+}
+
+html {
+  background: #ffffff;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  overflow-x: hidden;
+  background: #ffffff;
+  color: #0a1020;
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+}
+
+header,
+header::before,
+header::after {
+  border: 0;
+  box-shadow: none;
+}
+
+.section-shell {
+  width: min(1180px, calc(100% - 2rem));
+  max-width: calc(100% - 2rem);
+  margin-inline: auto;
+}
+
+.section-label {
+  color: #0f62fe;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.section-heading {
+  color: #0a1020;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.12;
+}
+
+@media (min-width: 640px) {
+  .section-heading {
+    font-size: 3rem;
+  }
+}
+
+header nav a,
+.header-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #0a1020;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap;
+  outline-offset: 0.35rem;
+  transition:
+    color 160ms ease,
+    text-shadow 160ms ease;
+}
+
+.header-link:hover,
+.header-link:focus-visible {
+  color: #0a1020;
+  text-shadow: 0 0 0.75px currentColor;
+}
+
+.header-link:focus-visible {
+  outline: 2px solid #0f62fe;
+}
+
+.image-panel,
+.soft-card {
+  border: 1px solid rgba(216, 228, 248, 0.95);
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 40px rgba(10, 16, 32, 0.08);
+}
+
+.image-panel {
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.soft-card {
+  padding: 1.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
