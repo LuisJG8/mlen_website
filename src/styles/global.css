@@ -76,9 +76,9 @@ header nav a,
   align-items: center;
   justify-content: center;
   color: #0a1020;
-  font-size: 19px !important;
-  font-weight: 700 !important;
-  line-height: 1.2 !important;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.2;
   white-space: nowrap;
   outline-offset: 0.35rem;
   transition:
