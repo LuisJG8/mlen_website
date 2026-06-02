@@ -142,6 +142,7 @@ const externalRel = 'noopener noreferrer';
         );
 
         revealItems.forEach((item) => observer.observe(item));
+        window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
       })();
     </script>
     <script is:inline>
@@ -155,6 +156,7 @@ const externalRel = 'noopener noreferrer';
         const buttons = Array.from(map.querySelectorAll('[data-topic-index]'));
         const title = map.querySelector('[data-brain-title]');
         const body = map.querySelector('[data-brain-body]');
+        const controller = new AbortController();
 
         const selectTopic = (button) => {
           const activeId = button.dataset.topicIndex;
@@ -183,9 +185,10 @@ const externalRel = 'noopener noreferrer';
         };
 
         buttons.forEach((button) => {
-          button.addEventListener('click', () => selectTopic(button));
-          button.addEventListener('focus', () => selectTopic(button));
+          button.addEventListener('click', () => selectTopic(button), { signal: controller.signal });
+          button.addEventListener('focus', () => selectTopic(button), { signal: controller.signal });
         });
+        window.addEventListener('pagehide', () => controller.abort(), { once: true });
 
         const defaultButton = buttons[0];
 

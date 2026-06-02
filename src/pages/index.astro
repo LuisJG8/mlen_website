@@ -250,6 +250,7 @@ const externalRel = 'noopener noreferrer';
         );
 
         revealItems.forEach((item) => observer.observe(item));
+        window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
       })();
     </script>
   </body>

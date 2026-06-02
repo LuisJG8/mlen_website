@@ -112,6 +112,7 @@ export const mountBrainNetwork = () => {
   let frameId = 0;
   let isStageVisible = true;
   let isPageVisible = document.visibilityState === 'visible';
+  let isDisposed = false;
 
   canvas.dataset.engine = 'three.js r184';
   camera.position.set(0, 0, 12);
@@ -248,6 +249,10 @@ export const mountBrainNetwork = () => {
   };
 
   const resize = () => {
+    if (isDisposed) {
+      return;
+    }
+
     const rect = stage.getBoundingClientRect();
     const width = Math.max(1, Math.floor(rect.width));
     const height = Math.max(1, Math.floor(rect.height));
@@ -284,6 +289,11 @@ export const mountBrainNetwork = () => {
   };
 
   const renderFrame = (time: number) => {
+    if (isDisposed) {
+      frameId = 0;
+      return;
+    }
+
     const seconds = time * 0.001;
 
     data.nodes.forEach((node) => {
@@ -326,7 +336,7 @@ export const mountBrainNetwork = () => {
   };
 
   const startAnimation = () => {
-    if (prefersReducedMotion || frameId || !isStageVisible || !isPageVisible) {
+    if (isDisposed || prefersReducedMotion || frameId || !isStageVisible || !isPageVisible) {
       return;
     }
 
@@ -361,7 +371,7 @@ export const mountBrainNetwork = () => {
   );
   visibilityObserver.observe(stage);
 
-  map.addEventListener('brain-topic-change', (event) => {
+  const handleTopicChange = (event: Event) => {
     const detail = (event as CustomEvent<{ activeId: number }>).detail;
 
     if (typeof detail?.activeId !== 'number') {
@@ -374,7 +384,9 @@ export const mountBrainNetwork = () => {
     if (prefersReducedMotion) {
       renderer.render(scene, camera);
     }
-  });
+  };
+
+  map.addEventListener('brain-topic-change', handleTopicChange);
 
   const handleVisibilityChange = () => {
     isPageVisible = document.visibilityState === 'visible';
@@ -387,8 +399,14 @@ export const mountBrainNetwork = () => {
   };
 
   const cleanup = () => {
+    if (isDisposed) {
+      return;
+    }
+
+    isDisposed = true;
     stopAnimation();
 
+    map.removeEventListener('brain-topic-change', handleTopicChange);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     resizeObserver.disconnect();
     visibilityObserver.disconnect();
