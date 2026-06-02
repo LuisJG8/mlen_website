@@ -26,13 +26,13 @@ type EdgeRender = {
   mesh: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshBasicMaterial>;
 };
 
-const dataElement = document.querySelector<HTMLScriptElement>('#brain-network-data');
-const map = document.querySelector<HTMLElement>('.brain-map');
-const stage = document.querySelector<HTMLElement>('.brain-stage');
-const canvas = document.querySelector<HTMLCanvasElement>('[data-brain-canvas]');
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
 export const mountBrainNetwork = () => {
+  const dataElement = document.querySelector<HTMLScriptElement>('#brain-network-data');
+  const map = document.querySelector<HTMLElement>('.brain-map');
+  const stage = document.querySelector<HTMLElement>('.brain-stage');
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-brain-canvas]');
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   if (!dataElement || !map || !stage || !canvas || canvas.dataset.engine === 'three.js r184') {
     return;
   }
