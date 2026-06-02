@@ -408,6 +408,7 @@ export const mountBrainNetwork = () => {
 
     map.removeEventListener('brain-topic-change', handleTopicChange);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('pagehide', handlePageHide);
     resizeObserver.disconnect();
     visibilityObserver.disconnect();
 
@@ -428,6 +429,14 @@ export const mountBrainNetwork = () => {
     renderer.dispose();
   };
 
+  const handlePageHide = (event: PageTransitionEvent) => {
+    if (event.persisted) {
+      return;
+    }
+
+    cleanup();
+  };
+
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
   updateHighlights();
@@ -440,5 +449,5 @@ export const mountBrainNetwork = () => {
     startAnimation();
   }
 
-  window.addEventListener('pagehide', cleanup, { once: true });
+  window.addEventListener('pagehide', handlePageHide);
 };

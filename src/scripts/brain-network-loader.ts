@@ -10,7 +10,7 @@ const mountWhenVisible = () => {
   let timeoutId = 0;
 
   const cleanup = () => {
-    window.removeEventListener('pagehide', cleanup);
+    window.removeEventListener('pagehide', handlePageHide);
     observer?.disconnect();
     observer = null;
 
@@ -18,6 +18,14 @@ const mountWhenVisible = () => {
       globalThis.clearTimeout(timeoutId);
       timeoutId = 0;
     }
+  };
+
+  const handlePageHide = (event: PageTransitionEvent) => {
+    if (event.persisted) {
+      return;
+    }
+
+    cleanup();
   };
 
   const loadBrainNetwork = async () => {
@@ -32,7 +40,7 @@ const mountWhenVisible = () => {
     mountBrainNetwork();
   };
 
-  window.addEventListener('pagehide', cleanup, { once: true });
+  window.addEventListener('pagehide', handlePageHide);
 
   if (!('IntersectionObserver' in window)) {
     timeoutId = globalThis.setTimeout(loadBrainNetwork, 0);

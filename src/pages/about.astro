@@ -142,7 +142,15 @@ const externalRel = 'noopener noreferrer';
         );
 
         revealItems.forEach((item) => observer.observe(item));
-        window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
+        const handlePageHide = (event) => {
+          if (event.persisted) {
+            return;
+          }
+
+          observer.disconnect();
+          window.removeEventListener('pagehide', handlePageHide);
+        };
+        window.addEventListener('pagehide', handlePageHide);
       })();
     </script>
     <script is:inline>
@@ -188,7 +196,15 @@ const externalRel = 'noopener noreferrer';
           button.addEventListener('click', () => selectTopic(button), { signal: controller.signal });
           button.addEventListener('focus', () => selectTopic(button), { signal: controller.signal });
         });
-        window.addEventListener('pagehide', () => controller.abort(), { once: true });
+        const handlePageHide = (event) => {
+          if (event.persisted) {
+            return;
+          }
+
+          controller.abort();
+          window.removeEventListener('pagehide', handlePageHide);
+        };
+        window.addEventListener('pagehide', handlePageHide);
 
         const defaultButton = buttons[0];
 
