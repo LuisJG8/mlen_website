@@ -1,5 +1,5 @@
 export const externalLinks = {
-  discord: 'https://discord.gg/mlen-placeholder',
+  discord: 'https://discord.gg/TBq62DysV',
   youtube: 'https://www.youtube.com/@mlen-placeholder',
   linkedin: 'https://www.linkedin.com/company/mlen-placeholder',
 } as const;

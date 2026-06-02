@@ -1,0 +1,220 @@
+---
+import BrainNetwork from '../components/BrainNetwork.astro';
+import '../styles/global.css';
+import { externalLinks, socialLinks } from '../content/links';
+
+const navLinks = [
+  {
+    label: 'Resources',
+    href: externalLinks.discord,
+    external: true,
+  },
+  {
+    label: 'Events',
+    href: '/#event',
+    external: false,
+  },
+  {
+    label: 'Agentic ML',
+    href: '/#agentic-ml',
+    external: false,
+  },
+  {
+    label: 'About',
+    href: '/about',
+    external: false,
+  },
+] as const;
+
+const externalRel = 'noopener noreferrer';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="About MLEN, a practical community for machine learning engineers, students, builders, and practitioners."
+    />
+    <title>About MLEN | Machine Learning Engineering Network</title>
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
+  </head>
+  <body class="antialiased">
+    <header class="py-5">
+      <nav class="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" aria-label="Main navigation">
+        <a href="/" class="header-link transition-colors duration-200 hover:text-leaf focus-visible:text-leaf">
+          Machine Learning Engineering Network
+        </a>
+        <div class="flex w-full flex-wrap items-center justify-end gap-x-6 gap-y-3 sm:w-auto">
+          {
+            navLinks.map((link) => (
+              <a
+                class="header-link transition-colors duration-200 hover:text-leaf focus-visible:text-leaf"
+                href={link.href}
+                target={link.external ? '_blank' : undefined}
+                rel={link.external ? externalRel : undefined}
+                aria-current={link.href === '/about' ? 'page' : undefined}
+              >
+                {link.label}
+              </a>
+            ))
+          }
+        </div>
+      </nav>
+    </header>
+
+    <main class="mt-8">
+      <section class="section-shell py-20 lg:py-28">
+        <div class="reveal">
+          <p class="section-label">About MLEN</p>
+          <h1 class="mt-4 max-w-4xl text-[38px] font-bold leading-[1.04] text-ink sm:text-[50px] lg:text-[62px]">
+            A community for people who want to get sharper at practical ML engineering.
+          </h1>
+          <p class="mt-6 max-w-4xl text-lg leading-8 text-muted sm:text-xl">
+            MLEN exists to make machine learning engineering feel less isolated. It is a place for ML engineers,
+            students, builders, MLOps practitioners, data professionals, and AI practitioners to compare notes, ask
+            better questions, share projects, and build judgment around the parts of ML work that rarely fit neatly
+            into tutorials.
+          </p>
+          <p class="mt-4 max-w-4xl text-lg leading-8 text-muted sm:text-xl">
+            The goal is to create a practical front door for the community: Discord for daily conversation, events for
+            shared context, and lightweight content channels for recordings, writing, and resources worth coming back
+            to.
+          </p>
+        </div>
+
+        <div class="mt-12">
+          <BrainNetwork />
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-sky-line py-8">
+      <div class="section-shell flex flex-col gap-4 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+        <p>© 2026 MLEN</p>
+        <div class="flex flex-wrap gap-x-5 gap-y-2">
+          {
+            socialLinks.map((link) => (
+              <a
+                href={link.href}
+                target="_blank"
+                rel={externalRel}
+                class="font-semibold transition hover:text-ink"
+                aria-label={`${link.label}: ${link.description}`}
+              >
+                {link.label}
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </footer>
+
+    <script is:inline>
+      (() => {
+        const revealItems = Array.from(document.querySelectorAll('.reveal'));
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!('IntersectionObserver' in window) || prefersReducedMotion) {
+          revealItems.forEach((item) => item.classList.add('is-visible'));
+          return;
+        }
+
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (!entry.isIntersecting) {
+                return;
+              }
+
+              entry.target.classList.add('is-visible');
+              observer.unobserve(entry.target);
+            });
+          },
+          {
+            rootMargin: '0px 0px -12% 0px',
+            threshold: 0.12,
+          }
+        );
+
+        revealItems.forEach((item) => observer.observe(item));
+        const handlePageHide = (event) => {
+          if (event.persisted) {
+            return;
+          }
+
+          observer.disconnect();
+          window.removeEventListener('pagehide', handlePageHide);
+        };
+        window.addEventListener('pagehide', handlePageHide);
+      })();
+    </script>
+    <script is:inline>
+      (() => {
+        const map = document.querySelector('.brain-map');
+
+        if (!map) {
+          return;
+        }
+
+        const buttons = Array.from(map.querySelectorAll('[data-topic-index]'));
+        const title = map.querySelector('[data-brain-title]');
+        const body = map.querySelector('[data-brain-body]');
+        const controller = new AbortController();
+
+        const selectTopic = (button) => {
+          const activeId = button.dataset.topicIndex;
+
+          buttons.forEach((item) => {
+            const isActive = item === button;
+            item.classList.toggle('is-active', isActive);
+            item.setAttribute('aria-pressed', String(isActive));
+          });
+
+          if (title && button.dataset.title) {
+            title.textContent = button.dataset.title;
+          }
+
+          if (body && button.dataset.body) {
+            body.textContent = button.dataset.body;
+          }
+
+          map.dispatchEvent(
+            new CustomEvent('brain-topic-change', {
+              detail: {
+                activeId: Number(activeId),
+              },
+            })
+          );
+        };
+
+        buttons.forEach((button) => {
+          button.addEventListener('click', () => selectTopic(button), { signal: controller.signal });
+          button.addEventListener('focus', () => selectTopic(button), { signal: controller.signal });
+        });
+        const handlePageHide = (event) => {
+          if (event.persisted) {
+            return;
+          }
+
+          controller.abort();
+          window.removeEventListener('pagehide', handlePageHide);
+        };
+        window.addEventListener('pagehide', handlePageHide);
+
+        const defaultButton = buttons[0];
+
+        if (defaultButton) {
+          selectTopic(defaultButton);
+        }
+      })();
+    </script>
+    <script>
+      import '../scripts/brain-network-loader';
+    </script>
+  </body>
+</html>
