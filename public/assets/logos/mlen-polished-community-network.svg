@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 520" role="img" aria-labelledby="title desc">
+  <title id="title">MLEN polished community network logo</title>
+  <desc id="desc">A simplified neural network logo with abstract machine learning engineers connected around a central code node.</desc>
+  <defs>
+    <style>
+      .ink { fill: #0a1020; }
+      .muted { fill: #52627a; }
+      .panel { fill: #ffffff; }
+      .soft { fill: #f4f8ff; }
+      .cyan { fill: #06b6d4; }
+      .lime { fill: #84cc16; }
+      .line {
+        fill: none;
+        stroke: #8fa0b7;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .line-primary {
+        fill: none;
+        stroke: #06b6d4;
+        stroke-width: 7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .avatar-body { fill: #0a1020; }
+      .avatar-head { fill: #ffffff; stroke: #0a1020; stroke-width: 7; }
+      .code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: 42px;
+        font-weight: 800;
+        letter-spacing: -0.12em;
+      }
+      .wordmark {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        font-size: 64px;
+        font-weight: 850;
+        letter-spacing: 0.035em;
+      }
+      .subtitle {
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        font-size: 15px;
+        font-weight: 760;
+        letter-spacing: 0.22em;
+      }
+    </style>
+  </defs>
+
+  <rect class="panel" width="760" height="520" rx="0" />
+
+  <g transform="translate(88 44)">
+    <path class="line" d="M170 132 L288 214 M170 300 L288 214 M388 118 L288 214 M388 314 L288 214 M92 220 L288 214 M484 220 L288 214" />
+    <path class="line-primary" d="M92 220 L170 132 L288 214 L388 118 L484 220" />
+    <path class="line-primary" d="M170 300 L288 214 L388 314" opacity="0.72" />
+
+    <g transform="translate(92 220)">
+      <circle class="soft" r="62" />
+      <path class="avatar-body" d="M-39 43c7-31 25-48 39-48s32 17 39 48z" />
+      <circle class="avatar-head" cy="-22" r="23" />
+      <circle class="cyan" cy="-22" r="8" />
+    </g>
+
+    <g transform="translate(170 132)">
+      <circle class="soft" r="62" />
+      <path class="avatar-body" d="M-39 43c7-31 25-48 39-48s32 17 39 48z" />
+      <circle class="avatar-head" cy="-22" r="23" />
+      <circle class="lime" cy="-22" r="8" />
+    </g>
+
+    <g transform="translate(170 300)">
+      <circle class="soft" r="62" />
+      <path class="avatar-body" d="M-39 43c7-31 25-48 39-48s32 17 39 48z" />
+      <circle class="avatar-head" cy="-22" r="23" />
+      <circle class="cyan" cy="-22" r="8" />
+    </g>
+
+    <g transform="translate(388 118)">
+      <circle class="soft" r="62" />
+      <path class="avatar-body" d="M-39 43c7-31 25-48 39-48s32 17 39 48z" />
+      <circle class="avatar-head" cy="-22" r="23" />
+      <circle class="cyan" cy="-22" r="8" />
+    </g>
+
+    <g transform="translate(388 314)">
+      <circle class="soft" r="62" />
+      <path class="avatar-body" d="M-39 43c7-31 25-48 39-48s32 17 39 48z" />
+      <circle class="avatar-head" cy="-22" r="23" />
+      <circle class="lime" cy="-22" r="8" />
+    </g>
+
+    <g transform="translate(484 220)">
+      <circle class="soft" r="62" />
+      <path class="avatar-body" d="M-39 43c7-31 25-48 39-48s32 17 39 48z" />
+      <circle class="avatar-head" cy="-22" r="23" />
+      <circle class="cyan" cy="-22" r="8" />
+    </g>
+
+    <g transform="translate(288 214)">
+      <circle class="cyan" r="58" />
+      <circle fill="#ffffff" r="42" opacity="0.12" />
+      <text class="code" x="0" y="13" text-anchor="middle" fill="#ffffff">&lt;/&gt;</text>
+    </g>
+  </g>
+
+  <g transform="translate(215 455)">
+    <text class="wordmark ink" x="0" y="0">MLEN</text>
+    <text class="subtitle muted" x="215" y="-8">MACHINE LEARNING</text>
+    <text class="subtitle muted" x="215" y="21">ENGINEERING NETWORK</text>
+  </g>
+</svg>
