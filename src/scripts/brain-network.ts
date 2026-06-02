@@ -1,5 +1,3 @@
-import * as THREE from 'three';
-
 type BrainNode = {
   id: number;
   x: number;
@@ -18,16 +16,39 @@ type BrainData = {
   edges: [number, number][];
 };
 
-type EdgeRender = {
-  sourceId: number;
-  targetId: number;
-  material: THREE.MeshBasicMaterial;
-  points: [THREE.Vector3, THREE.Vector3];
-  mesh: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshBasicMaterial>;
+type RenderMetrics = {
+  cssHeight: number;
+  cssWidth: number;
+  offsetX: number;
+  offsetY: number;
+  scale: number;
+};
+
+type RenderNode = BrainNode & {
+  renderRadius: number;
+  renderX: number;
+  renderY: number;
 };
 
 const nodeSizes = new Set<BrainNode['size']>(['small', 'medium', 'large']);
 const nodeTones = new Set<BrainNode['tone']>(['cyan', 'dark']);
+const accentEdgeKeys = new Set(['0-1', '3-4']);
+const nodeRadius = {
+  small: 13,
+  medium: 20,
+  large: 31,
+} satisfies Record<BrainNode['size'], number>;
+
+const colors = {
+  active: '#35b8f5',
+  cyan: '#5ccbff',
+  dark: '#001f5f',
+  focus: '#0f62fe',
+  white: 'rgba(255, 255, 255, 0.88)',
+};
+
+const maxPixelRatio = 1.5;
+const targetFrameInterval = 1000 / 30;
 
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 
@@ -67,12 +88,24 @@ const isBrainData = (value: unknown): value is BrainData => {
   return (
     Boolean(data.bounds) &&
     isFiniteNumber(data.bounds?.width) &&
+    data.bounds.width > 0 &&
     isFiniteNumber(data.bounds?.height) &&
+    data.bounds.height > 0 &&
     Array.isArray(data.nodes) &&
     data.nodes.every(isBrainNode) &&
     Array.isArray(data.edges) &&
     data.edges.every(isBrainEdge)
   );
+};
+
+const getEdgeKey = (sourceId: number, targetId: number) => [sourceId, targetId].sort((a, b) => a - b).join('-');
+
+const getNodeColor = (node: BrainNode, activeId: number) => {
+  if (node.interactive && node.id === activeId) {
+    return colors.active;
+  }
+
+  return node.tone === 'cyan' ? colors.cyan : colors.dark;
 };
 
 export const mountBrainNetwork = () => {
@@ -82,7 +115,7 @@ export const mountBrainNetwork = () => {
   const canvas = document.querySelector<HTMLCanvasElement>('[data-brain-canvas]');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (!dataElement || !map || !stage || !canvas || canvas.dataset.engine === 'three.js r184') {
+  if (!dataElement || !map || !stage || !canvas || canvas.dataset.engine === '2d-canvas') {
     return;
   }
 
@@ -100,152 +133,138 @@ export const mountBrainNetwork = () => {
     return;
   }
 
-  const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, canvas });
-  const scene = new THREE.Scene();
-  const camera = new THREE.OrthographicCamera(-7.2, 7.2, 4.3, -4.3, 0.1, 100);
-  const nodeMeshes = new Map<number, THREE.Mesh<THREE.SphereGeometry, THREE.MeshStandardMaterial>>();
-  const nodeBasePositions = new Map<number, THREE.Vector3>();
+  const context = canvas.getContext('2d', { alpha: true });
+
+  if (!context) {
+    return;
+  }
+
   const overlayNodes = new Map<number, HTMLElement>();
-  const edgeRenders: EdgeRender[] = [];
   const activeButton = map.querySelector<HTMLElement>('[data-topic-index].is-active');
   let activeId = Number(activeButton?.dataset.topicIndex ?? 0);
   let frameId = 0;
-  let isStageVisible = true;
-  let isPageVisible = document.visibilityState === 'visible';
   let isDisposed = false;
-
-  canvas.dataset.engine = 'three.js r184';
-  camera.position.set(0, 0, 12);
-  scene.add(camera);
-  scene.add(new THREE.AmbientLight(0xffffff, 1.85));
-
-  const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
-  keyLight.position.set(-3, 5, 8);
-  scene.add(keyLight);
-
-  const fillLight = new THREE.DirectionalLight(0x79b8ff, 0.9);
-  fillLight.position.set(4, -3, 6);
-  scene.add(fillLight);
-
-  const nodeScale = {
-    small: 0.2,
-    medium: 0.28,
-    large: 0.44,
-  } satisfies Record<BrainNode['size'], number>;
-
-  const accentEdgeKeys = new Set(['0-1', '3-4']);
-  const edgeRadius = 0.027;
-  const sceneWidth = 10.9;
-  const sceneHeight = 7.1;
-
-  const getEdgeKey = (sourceId: number, targetId: number) => [sourceId, targetId].sort((a, b) => a - b).join('-');
-
-  const nodeColor = (node: BrainNode) => {
-    if (node.interactive && node.id === activeId) {
-      return 0x35b8f5;
-    }
-
-    if (node.tone === 'cyan') {
-      return 0x5ccbff;
-    }
-
-    return 0x001f5f;
+  let isPageVisible = document.visibilityState === 'visible';
+  let isStageVisible = true;
+  let lastFrameTime = 0;
+  let metrics: RenderMetrics = {
+    cssHeight: 1,
+    cssWidth: 1,
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
   };
 
-  const toScenePosition = (node: BrainNode) => {
-    const x = (node.x / data.bounds.width - 0.5) * sceneWidth;
-    const y = (0.5 - node.y / data.bounds.height) * sceneHeight;
-    const z = (Math.sin(node.id * 1.37) + Math.cos(node.x * 0.015)) * 0.18;
-
-    return new THREE.Vector3(x, y, z);
-  };
-
-  const setEdgeTransform = (
-    mesh: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshBasicMaterial>,
-    source: THREE.Vector3,
-    target: THREE.Vector3,
-  ) => {
-    const direction = new THREE.Vector3().subVectors(target, source);
-    const midpoint = new THREE.Vector3().addVectors(source, target).multiplyScalar(0.5);
-    const length = direction.length();
-
-    mesh.position.copy(midpoint);
-    mesh.scale.set(1, length, 1);
-    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize());
-  };
+  canvas.dataset.engine = '2d-canvas';
 
   map.querySelectorAll<HTMLElement>('[data-brain-node-id]').forEach((element) => {
     overlayNodes.set(Number(element.dataset.brainNodeId), element);
   });
 
-  data.nodes.forEach((node) => {
-    const geometry = new THREE.SphereGeometry(nodeScale[node.size], 32, 18);
-    const material = new THREE.MeshStandardMaterial({
-      color: nodeColor(node),
-      emissive: node.interactive && node.id === activeId ? 0x0f62fe : 0x000000,
-      emissiveIntensity: node.interactive && node.id === activeId ? 0.28 : 0,
-      metalness: 0.05,
-      roughness: 0.36,
+  const getRenderNodes = (time: number) => {
+    const seconds = time * 0.001;
+
+    return data.nodes.map((node): RenderNode => {
+      const float = prefersReducedMotion ? 0 : Math.sin(seconds * 0.48 + node.id * 0.62) * 8;
+      const drift = prefersReducedMotion ? 0 : Math.cos(seconds * 0.36 + node.id * 0.43) * 4;
+      const isActive = node.id === activeId;
+
+      return {
+        ...node,
+        renderRadius: nodeRadius[node.size] * (isActive ? 1.18 : 1),
+        renderX: node.x + drift,
+        renderY: node.y + float,
+      };
     });
-    const mesh = new THREE.Mesh(geometry, material);
-    const position = toScenePosition(node);
+  };
 
-    mesh.position.copy(position);
-    nodeBasePositions.set(node.id, position);
-    nodeMeshes.set(node.id, mesh);
-    scene.add(mesh);
-  });
+  const toCanvasX = (x: number) => metrics.offsetX + x * metrics.scale;
+  const toCanvasY = (y: number) => metrics.offsetY + y * metrics.scale;
 
-  data.edges.forEach(([sourceId, targetId]) => {
-    const source = nodeBasePositions.get(sourceId);
-    const target = nodeBasePositions.get(targetId);
+  const updateOverlayPositions = (renderNodes: RenderNode[]) => {
+    renderNodes.forEach((node) => {
+      const element = overlayNodes.get(node.id);
 
-    if (!source || !target) {
-      return;
-    }
-
-    const isAccent = accentEdgeKeys.has(getEdgeKey(sourceId, targetId));
-    const material = new THREE.MeshBasicMaterial({
-      color: isAccent ? 0x35b8f5 : 0x001f5f,
-      transparent: true,
-      opacity: sourceId === activeId || targetId === activeId ? 0.92 : 0.74,
-    });
-    const geometry = new THREE.CylinderGeometry(edgeRadius, edgeRadius, 1, 12);
-    const mesh = new THREE.Mesh(geometry, material);
-
-    setEdgeTransform(mesh, source, target);
-
-    edgeRenders.push({
-      sourceId,
-      targetId,
-      material,
-      points: [source.clone(), target.clone()],
-      mesh,
-    });
-    scene.add(mesh);
-  });
-
-  const updateHighlights = () => {
-    data.nodes.forEach((node) => {
-      const mesh = nodeMeshes.get(node.id);
-
-      if (!mesh) {
+      if (!element) {
         return;
       }
 
-      const isActive = node.id === activeId;
-      mesh.material.color.setHex(nodeColor(node));
-      mesh.material.emissive.setHex(isActive ? 0x0f62fe : 0x000000);
-      mesh.material.emissiveIntensity = isActive ? 0.3 : 0;
-      mesh.scale.setScalar(isActive ? 1.24 : 1);
+      element.style.setProperty('--x', `${(toCanvasX(node.renderX) / metrics.cssWidth) * 100}%`);
+      element.style.setProperty('--y', `${(toCanvasY(node.renderY) / metrics.cssHeight) * 100}%`);
+    });
+  };
+
+  const drawLine = (source: RenderNode, target: RenderNode) => {
+    const isConnected = source.id === activeId || target.id === activeId;
+    const isAccent = accentEdgeKeys.has(getEdgeKey(source.id, target.id));
+
+    context.beginPath();
+    context.moveTo(toCanvasX(source.renderX), toCanvasY(source.renderY));
+    context.lineTo(toCanvasX(target.renderX), toCanvasY(target.renderY));
+    context.lineCap = 'round';
+    context.lineJoin = 'round';
+    context.lineWidth = (isConnected ? 5 : 4) * metrics.scale;
+    context.globalAlpha = isConnected ? 0.94 : isAccent ? 0.88 : 0.72;
+    context.strokeStyle = isConnected || isAccent ? colors.active : colors.dark;
+    context.stroke();
+  };
+
+  const drawNode = (node: RenderNode) => {
+    const x = toCanvasX(node.renderX);
+    const y = toCanvasY(node.renderY);
+    const radius = node.renderRadius * metrics.scale;
+    const isActive = node.id === activeId;
+
+    context.globalAlpha = 1;
+
+    if (isActive) {
+      context.beginPath();
+      context.arc(x, y, radius + 8 * metrics.scale, 0, Math.PI * 2);
+      context.fillStyle = 'rgba(53, 184, 245, 0.16)';
+      context.fill();
+    }
+
+    context.beginPath();
+    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.fillStyle = getNodeColor(node, activeId);
+    context.fill();
+    context.lineWidth = 3 * metrics.scale;
+    context.strokeStyle = colors.white;
+    context.stroke();
+
+    if (isActive) {
+      context.beginPath();
+      context.arc(x, y, radius * 0.42, 0, Math.PI * 2);
+      context.fillStyle = 'rgba(255, 255, 255, 0.22)';
+      context.fill();
+    }
+  };
+
+  const draw = (time = performance.now()) => {
+    if (isDisposed) {
+      return;
+    }
+
+    const renderNodes = getRenderNodes(time);
+    const renderNodeById = new Map(renderNodes.map((node) => [node.id, node]));
+
+    context.clearRect(0, 0, metrics.cssWidth, metrics.cssHeight);
+    context.save();
+
+    data.edges.forEach(([sourceId, targetId]) => {
+      const source = renderNodeById.get(sourceId);
+      const target = renderNodeById.get(targetId);
+
+      if (!source || !target) {
+        return;
+      }
+
+      drawLine(source, target);
     });
 
-    edgeRenders.forEach((edge) => {
-      const isConnected = edge.sourceId === activeId || edge.targetId === activeId;
-      const isAccent = accentEdgeKeys.has(getEdgeKey(edge.sourceId, edge.targetId));
-      edge.material.color.setHex(isAccent ? 0x35b8f5 : 0x001f5f);
-      edge.material.opacity = isConnected ? 0.92 : 0.72;
-    });
+    renderNodes.forEach(drawNode);
+    context.restore();
+    updateOverlayPositions(renderNodes);
   };
 
   const resize = () => {
@@ -254,38 +273,25 @@ export const mountBrainNetwork = () => {
     }
 
     const rect = stage.getBoundingClientRect();
-    const width = Math.max(1, Math.floor(rect.width));
-    const height = Math.max(1, Math.floor(rect.height));
-    const aspect = width / height;
-    const viewHeight = 8.5;
-    const viewWidth = viewHeight * aspect;
+    const cssWidth = Math.max(1, Math.floor(rect.width));
+    const cssHeight = Math.max(1, Math.floor(rect.height));
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, maxPixelRatio);
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-    renderer.setSize(width, height, false);
-    camera.left = -viewWidth / 2;
-    camera.right = viewWidth / 2;
-    camera.top = viewHeight / 2;
-    camera.bottom = -viewHeight / 2;
-    camera.updateProjectionMatrix();
-    updateOverlayPositions();
-    renderer.render(scene, camera);
-  };
+    canvas.width = Math.floor(cssWidth * pixelRatio);
+    canvas.height = Math.floor(cssHeight * pixelRatio);
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-  const updateOverlayPositions = () => {
-    const worldPosition = new THREE.Vector3();
+    const scale = Math.min(cssWidth / data.bounds.width, cssHeight / data.bounds.height);
 
-    overlayNodes.forEach((element, id) => {
-      const mesh = nodeMeshes.get(id);
+    metrics = {
+      cssHeight,
+      cssWidth,
+      offsetX: (cssWidth - data.bounds.width * scale) / 2,
+      offsetY: (cssHeight - data.bounds.height * scale) / 2,
+      scale,
+    };
 
-      if (!mesh) {
-        return;
-      }
-
-      mesh.getWorldPosition(worldPosition);
-      worldPosition.project(camera);
-      element.style.setProperty('--x', `${((worldPosition.x + 1) / 2) * 100}%`);
-      element.style.setProperty('--y', `${((-worldPosition.y + 1) / 2) * 100}%`);
-    });
+    draw();
   };
 
   const renderFrame = (time: number) => {
@@ -294,39 +300,10 @@ export const mountBrainNetwork = () => {
       return;
     }
 
-    const seconds = time * 0.001;
-
-    data.nodes.forEach((node) => {
-      const mesh = nodeMeshes.get(node.id);
-      const base = nodeBasePositions.get(node.id);
-
-      if (!mesh || !base) {
-        return;
-      }
-
-      const float = Math.sin(seconds * 0.48 + node.id * 0.62) * 0.12;
-      const drift = Math.cos(seconds * 0.36 + node.id * 0.43) * 0.06;
-      mesh.position.set(base.x + drift, base.y + float, base.z + float * 1.35);
-    });
-
-    edgeRenders.forEach((edge) => {
-      const source = nodeMeshes.get(edge.sourceId);
-      const target = nodeMeshes.get(edge.targetId);
-
-      if (!source || !target) {
-        return;
-      }
-
-      edge.points[0].copy(source.position);
-      edge.points[1].copy(target.position);
-      setEdgeTransform(edge.mesh, edge.points[0], edge.points[1]);
-    });
-
-    scene.rotation.x = Math.sin(seconds * 0.18) * 0.018;
-    scene.rotation.y = Math.cos(seconds * 0.15) * 0.026;
-    scene.updateMatrixWorld();
-    updateOverlayPositions();
-    renderer.render(scene, camera);
+    if (time - lastFrameTime >= targetFrameInterval) {
+      lastFrameTime = time;
+      draw(time);
+    }
 
     if (isStageVisible && isPageVisible) {
       frameId = window.requestAnimationFrame(renderFrame);
@@ -379,14 +356,8 @@ export const mountBrainNetwork = () => {
     }
 
     activeId = detail.activeId;
-    updateHighlights();
-
-    if (prefersReducedMotion) {
-      renderer.render(scene, camera);
-    }
+    draw();
   };
-
-  map.addEventListener('brain-topic-change', handleTopicChange);
 
   const handleVisibilityChange = () => {
     isPageVisible = document.visibilityState === 'visible';
@@ -411,22 +382,8 @@ export const mountBrainNetwork = () => {
     window.removeEventListener('pagehide', handlePageHide);
     resizeObserver.disconnect();
     visibilityObserver.disconnect();
-
-    scene.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) {
-        return;
-      }
-
-      object.geometry.dispose();
-
-      if (Array.isArray(object.material)) {
-        object.material.forEach((material) => material.dispose());
-      } else {
-        object.material.dispose();
-      }
-    });
-
-    renderer.dispose();
+    context.clearRect(0, 0, metrics.cssWidth, metrics.cssHeight);
+    delete canvas.dataset.engine;
   };
 
   const handlePageHide = (event: PageTransitionEvent) => {
@@ -437,15 +394,13 @@ export const mountBrainNetwork = () => {
     cleanup();
   };
 
+  map.addEventListener('brain-topic-change', handleTopicChange);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
-  updateHighlights();
   resize();
-  stage.classList.add('is-three-ready');
+  stage.classList.add('is-canvas-ready');
 
-  if (prefersReducedMotion) {
-    renderer.render(scene, camera);
-  } else {
+  if (!prefersReducedMotion) {
     startAnimation();
   }
 

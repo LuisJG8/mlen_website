@@ -231,11 +231,11 @@ header nav a,
   transition: opacity 220ms ease;
 }
 
-.brain-stage.is-three-ready .brain-fallback {
+.brain-stage.is-canvas-ready .brain-fallback {
   opacity: 0;
 }
 
-.brain-stage.is-three-ready .brain-canvas {
+.brain-stage.is-canvas-ready .brain-canvas {
   opacity: 1;
 }
 
