@@ -1,4 +1,5 @@
 ---
+import BrainNetwork from '../components/BrainNetwork.astro';
 import '../styles/global.css';
 import { externalLinks, socialLinks } from '../content/links';
 
@@ -9,18 +10,13 @@ const navLinks = [
     external: true,
   },
   {
-    label: 'Events',
-    href: '#event',
-    external: false,
-  },
-  {
     label: 'Agentic ML',
     href: '#agentic-ml',
     external: false,
   },
   {
     label: 'About',
-    href: '/about',
+    href: '#about',
     external: false,
   },
 ] as const;
@@ -39,23 +35,8 @@ const features = [
     body: 'Find papers, guides, talks, implementation notes, and field-tested patterns worth your time.',
   },
   {
-    title: 'Talks and events',
-    body: 'Follow community sessions, meetups, recordings, and future live programming as MLEN grows.',
-  },
-];
-
-const events = [
-  {
-    title: 'In-person meetups',
-    body: 'Local gatherings for ML builders to meet, share work, and trade practical notes from the field.',
-  },
-  {
-    title: 'Online sessions',
-    body: 'Remote talks, workshops, and community calls for members who want to participate from anywhere.',
-  },
-  {
-    title: 'Project demos',
-    body: 'Lightweight show-and-tell sessions where members can present what they are building and get feedback.',
+    title: 'Community sessions',
+    body: 'Follow talks, demos, recordings, reading groups, and future live programming as MLEN grows.',
   },
 ];
 
@@ -70,6 +51,12 @@ const externalRel = 'noopener noreferrer';
     <meta
       name="description"
       content="MLEN is a Discord community for machine learning engineers, students, builders, and practitioners."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap"
     />
     <title>MLEN | Machine Learning Engineering Network</title>
     <script is:inline>
@@ -107,7 +94,7 @@ const externalRel = 'noopener noreferrer';
           </h1>
           <p class="mt-6 max-w-2xl text-lg leading-8 text-muted sm:text-xl">
             MLEN is a community for machine learning engineers, builders, and practitioners. Join for peer discussion,
-            useful content, and community events around real ML engineering work.
+            useful content, and practical conversations around real ML engineering work.
           </p>
           <a
             href={externalLinks.discord}
@@ -160,33 +147,6 @@ const externalRel = 'noopener noreferrer';
         </div>
       </section>
 
-      <section id="event" class="section-shell py-20 sm:py-28">
-        <div class="reveal rounded-[2rem] bg-white px-5 py-8 shadow-soft sm:px-8 sm:py-12 lg:px-12">
-          <div class="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-            <div>
-              <p class="section-label">Events</p>
-              <h2 class="section-heading mt-4">
-                Community programming online and in person.
-              </h2>
-              <p class="mt-5 leading-7 text-muted">
-                Events are where MLEN turns discussion into shared context: talks, demos, meetups, reading groups, and
-                hands-on sessions around practical ML engineering.
-              </p>
-            </div>
-            <div class="grid gap-4">
-              {
-                events.map((event, index) => (
-                  <article class="reveal rounded-2xl border border-sky-line bg-surface p-5" style={`--reveal-delay: ${index * 80}ms`}>
-                    <h3 class="text-xl font-bold text-ink">{event.title}</h3>
-                    <p class="mt-2 leading-7 text-muted">{event.body}</p>
-                  </article>
-                ))
-              }
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section id="agentic-ml" class="section-shell py-20 sm:py-28">
         <div class="reveal rounded-[2rem] bg-surface px-5 py-8 sm:px-8 sm:py-12 lg:px-12">
           <p class="section-label">Agentic ML</p>
@@ -200,9 +160,32 @@ const externalRel = 'noopener noreferrer';
         </div>
       </section>
 
+      <section id="about" class="section-shell py-20 sm:py-28">
+        <div class="reveal">
+          <p class="section-label">About MLEN</p>
+          <h2 class="section-heading mt-4">
+            A community for people who want to get sharper at practical ML engineering.
+          </h2>
+          <p class="mt-6 max-w-5xl text-lg leading-8 text-muted sm:text-xl">
+            MLEN exists to make machine learning engineering feel less isolated. It is a place for ML engineers,
+            students, builders, MLOps practitioners, data professionals, and AI practitioners to compare notes, ask
+            better questions, share projects, and build judgment around the parts of ML work that rarely fit neatly
+            into tutorials.
+          </p>
+          <p class="mt-4 max-w-5xl text-lg leading-8 text-muted sm:text-xl">
+            The goal is to create a practical front door for the community: Discord for daily conversation, shared
+            context, and lightweight content channels for recordings, writing, and resources worth coming back to.
+          </p>
+        </div>
+
+        <div class="mt-12">
+          <BrainNetwork />
+        </div>
+      </section>
+
     </main>
 
-    <footer class="border-t border-sky-line py-8">
+    <footer class="border-t border-sky-line py-[27px]">
       <div class="section-shell flex flex-col gap-4 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
         <p>© 2026 MLEN</p>
         <div class="flex flex-wrap gap-x-5 gap-y-2">
@@ -260,6 +243,9 @@ const externalRel = 'noopener noreferrer';
         };
         window.addEventListener('pagehide', handlePageHide);
       })();
+    </script>
+    <script>
+      import '../scripts/brain-network-loader';
     </script>
   </body>
 </html>
