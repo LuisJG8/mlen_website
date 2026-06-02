@@ -376,7 +376,7 @@ export const mountBrainNetwork = () => {
     }
   });
 
-  document.addEventListener('visibilitychange', () => {
+  const handleVisibilityChange = () => {
     isPageVisible = document.visibilityState === 'visible';
 
     if (isPageVisible) {
@@ -384,7 +384,19 @@ export const mountBrainNetwork = () => {
     } else {
       stopAnimation();
     }
-  });
+  };
+
+  const cleanup = () => {
+    stopAnimation();
+
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    window.removeEventListener('pagehide', cleanup);
+    resizeObserver.disconnect();
+    visibilityObserver.disconnect();
+    renderer.dispose();
+  };
+
+  document.addEventListener('visibilitychange', handleVisibilityChange);
 
   updateHighlights();
   resize();
@@ -396,11 +408,5 @@ export const mountBrainNetwork = () => {
     startAnimation();
   }
 
-  window.addEventListener('pagehide', () => {
-    stopAnimation();
-
-    resizeObserver.disconnect();
-    visibilityObserver.disconnect();
-    renderer.dispose();
-  });
+  window.addEventListener('pagehide', cleanup);
 };
