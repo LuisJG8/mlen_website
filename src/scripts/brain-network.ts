@@ -26,6 +26,55 @@ type EdgeRender = {
   mesh: THREE.Mesh<THREE.CylinderGeometry, THREE.MeshBasicMaterial>;
 };
 
+const nodeSizes = new Set<BrainNode['size']>(['small', 'medium', 'large']);
+const nodeTones = new Set<BrainNode['tone']>(['cyan', 'dark']);
+
+const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
+
+const isBrainNode = (value: unknown): value is BrainNode => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const node = value as Record<string, unknown>;
+
+  return (
+    isFiniteNumber(node.id) &&
+    isFiniteNumber(node.x) &&
+    isFiniteNumber(node.y) &&
+    typeof node.size === 'string' &&
+    nodeSizes.has(node.size as BrainNode['size']) &&
+    typeof node.tone === 'string' &&
+    nodeTones.has(node.tone as BrainNode['tone']) &&
+    typeof node.interactive === 'boolean'
+  );
+};
+
+const isBrainEdge = (value: unknown): value is [number, number] =>
+  Array.isArray(value) && value.length === 2 && isFiniteNumber(value[0]) && isFiniteNumber(value[1]);
+
+const isBrainData = (value: unknown): value is BrainData => {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+
+  const data = value as {
+    bounds?: { width?: unknown; height?: unknown };
+    nodes?: unknown;
+    edges?: unknown;
+  };
+
+  return (
+    Boolean(data.bounds) &&
+    isFiniteNumber(data.bounds?.width) &&
+    isFiniteNumber(data.bounds?.height) &&
+    Array.isArray(data.nodes) &&
+    data.nodes.every(isBrainNode) &&
+    Array.isArray(data.edges) &&
+    data.edges.every(isBrainEdge)
+  );
+};
+
 export const mountBrainNetwork = () => {
   const dataElement = document.querySelector<HTMLScriptElement>('#brain-network-data');
   const map = document.querySelector<HTMLElement>('.brain-map');
@@ -37,7 +86,20 @@ export const mountBrainNetwork = () => {
     return;
   }
 
-  const data = JSON.parse(dataElement.textContent || '{}') as BrainData;
+  let data: BrainData;
+
+  try {
+    const parsedData = JSON.parse(dataElement.textContent || '{}') as unknown;
+
+    if (!isBrainData(parsedData)) {
+      return;
+    }
+
+    data = parsedData;
+  } catch {
+    return;
+  }
+
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, canvas });
   const scene = new THREE.Scene();
   const camera = new THREE.OrthographicCamera(-7.2, 7.2, 4.3, -4.3, 0.1, 100);
