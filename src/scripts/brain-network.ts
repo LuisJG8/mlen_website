@@ -390,9 +390,23 @@ export const mountBrainNetwork = () => {
     stopAnimation();
 
     document.removeEventListener('visibilitychange', handleVisibilityChange);
-    window.removeEventListener('pagehide', cleanup);
     resizeObserver.disconnect();
     visibilityObserver.disconnect();
+
+    scene.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) {
+        return;
+      }
+
+      object.geometry.dispose();
+
+      if (Array.isArray(object.material)) {
+        object.material.forEach((material) => material.dispose());
+      } else {
+        object.material.dispose();
+      }
+    });
+
     renderer.dispose();
   };
 
@@ -408,5 +422,5 @@ export const mountBrainNetwork = () => {
     startAnimation();
   }
 
-  window.addEventListener('pagehide', cleanup);
+  window.addEventListener('pagehide', cleanup, { once: true });
 };
