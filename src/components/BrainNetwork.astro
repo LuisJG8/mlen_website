@@ -44,23 +44,6 @@ import {
       }
     </svg>
     <canvas class="brain-canvas" data-brain-canvas aria-hidden="true"></canvas>
-    <div class="brain-node-layer">
-      {
-        brainNodes.map((node) => {
-          const x = (node.x / brainBounds.width) * 100;
-          const y = (node.y / brainBounds.height) * 100;
-
-          return (
-            <span
-              class={`brain-node brain-node-${node.size} brain-node-static`}
-              style={`--x: ${x}%; --y: ${y}%;`}
-              data-brain-node-id={node.id}
-              aria-hidden="true"
-            ></span>
-          );
-        })
-      }
-    </div>
   </div>
 </div>
 
