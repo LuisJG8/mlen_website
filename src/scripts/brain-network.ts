@@ -51,7 +51,7 @@ const maxPixelRatio = 1.5;
 const targetFrameInterval = 1000 / 30 - 2;
 const floatAmplitude = 7;
 const driftAmplitude = 4;
-const stageInset = 78;
+const stageInsetRatio = 0.07;
 
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 
@@ -107,12 +107,11 @@ const getNodeColor = (node: BrainNode) => (node.tone === 'cyan' ? colors.cyan : 
 
 export const mountBrainNetwork = () => {
   const dataElement = document.querySelector<HTMLScriptElement>('#brain-network-data');
-  const map = document.querySelector<HTMLElement>('.brain-map');
   const stage = document.querySelector<HTMLElement>('.brain-stage');
   const canvas = document.querySelector<HTMLCanvasElement>('[data-brain-canvas]');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (!dataElement || !map || !stage || !canvas || canvas.dataset.engine === '2d-canvas') {
+  if (!dataElement || !stage || !canvas || canvas.dataset.engine === '2d-canvas') {
     return;
   }
 
@@ -136,7 +135,6 @@ export const mountBrainNetwork = () => {
     return;
   }
 
-  const overlayNodes = new Map<number, HTMLElement>();
   let frameId = 0;
   let isDisposed = false;
   let isPageVisible = document.visibilityState === 'visible';
@@ -151,10 +149,6 @@ export const mountBrainNetwork = () => {
   };
 
   canvas.dataset.engine = '2d-canvas';
-
-  map.querySelectorAll<HTMLElement>('[data-brain-node-id]').forEach((element) => {
-    overlayNodes.set(Number(element.dataset.brainNodeId), element);
-  });
 
   const getRenderNodes = (time: number) => {
     const seconds = time * 0.001;
@@ -174,19 +168,6 @@ export const mountBrainNetwork = () => {
 
   const toCanvasX = (x: number) => metrics.offsetX + x * metrics.scale;
   const toCanvasY = (y: number) => metrics.offsetY + y * metrics.scale;
-
-  const updateOverlayPositions = (renderNodes: RenderNode[]) => {
-    renderNodes.forEach((node) => {
-      const element = overlayNodes.get(node.id);
-
-      if (!element) {
-        return;
-      }
-
-      element.style.setProperty('--x', `${(toCanvasX(node.renderX) / metrics.cssWidth) * 100}%`);
-      element.style.setProperty('--y', `${(toCanvasY(node.renderY) / metrics.cssHeight) * 100}%`);
-    });
-  };
 
   const drawLine = (source: RenderNode, target: RenderNode) => {
     const isAccent = accentEdgeKeys.has(getEdgeKey(source.id, target.id));
@@ -242,7 +223,6 @@ export const mountBrainNetwork = () => {
 
     renderNodes.forEach(drawNode);
     context.restore();
-    updateOverlayPositions(renderNodes);
   };
 
   const resize = () => {
@@ -259,6 +239,7 @@ export const mountBrainNetwork = () => {
     canvas.height = Math.floor(cssHeight * pixelRatio);
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
+    const stageInset = cssWidth * stageInsetRatio;
     const drawableWidth = Math.max(1, cssWidth - stageInset * 2);
     const drawableHeight = Math.max(1, cssHeight - stageInset * 2);
     const scale = Math.min(drawableWidth / data.bounds.width, drawableHeight / data.bounds.height);
