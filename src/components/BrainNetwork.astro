@@ -5,7 +5,6 @@ import {
   brainEdges,
   brainNodeRadius,
   brainNodes,
-  brainTopics,
   getBrainEdgeKey,
 } from '../content/brain';
 ---
@@ -45,49 +44,7 @@ import {
       }
     </svg>
     <canvas class="brain-canvas" data-brain-canvas aria-hidden="true"></canvas>
-    <div class="brain-node-layer">
-      {
-        brainNodes.map((node) => {
-          const topic = node.interactive ? brainTopics[node.id] : null;
-          const x = (node.x / brainBounds.width) * 100;
-          const y = (node.y / brainBounds.height) * 100;
-
-          if (!topic) {
-            return (
-              <span
-                class={`brain-node brain-node-${node.size} brain-node-static`}
-                data-brain-node-id={node.id}
-                style={`--x: ${x}%; --y: ${y}%;`}
-                aria-hidden="true"
-              ></span>
-            );
-          }
-
-          return (
-            <button
-              type="button"
-              class={`brain-node brain-node-${node.size}`}
-              style={`--x: ${x}%; --y: ${y}%;`}
-              data-brain-node-id={node.id}
-              data-topic-index={node.id}
-              data-title={topic.title}
-              data-body={topic.body}
-              aria-pressed={node.id === 0 ? 'true' : 'false'}
-              aria-label={`Show ${topic.title}`}
-            >
-              <span class="sr-only">{topic.title}</span>
-            </button>
-          );
-        })
-      }
-    </div>
   </div>
-
-  <aside class="brain-detail" aria-live="polite">
-    <p class="brain-detail-kicker">Selected node</p>
-    <h3 data-brain-title>{brainTopics[0].title}</h3>
-    <p data-brain-body>{brainTopics[0].body}</p>
-  </aside>
 </div>
 
 <script

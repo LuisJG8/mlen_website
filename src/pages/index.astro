@@ -1,16 +1,12 @@
 ---
+import BrainNetwork from '../components/BrainNetwork.astro';
 import '../styles/global.css';
 import { externalLinks, socialLinks } from '../content/links';
 
 const navLinks = [
   {
-    label: 'Resources',
-    href: externalLinks.discord,
-    external: true,
-  },
-  {
-    label: 'Events',
-    href: '#event',
+    label: 'Community',
+    href: '#inside',
     external: false,
   },
   {
@@ -20,7 +16,7 @@ const navLinks = [
   },
   {
     label: 'About',
-    href: '/about',
+    href: '#about',
     external: false,
   },
 ] as const;
@@ -31,33 +27,24 @@ const features = [
     body: 'Ask concrete questions about modeling, data quality, evaluation, deployment, and operating ML systems.',
   },
   {
-    title: 'Learning & Growth',
-    body: 'Build sharper engineering judgment through peer learning, shared resources, project reviews, and practical lessons from real ML work.',
+    title: 'Peer learning',
+    body: 'Build sharper engineering judgment through project reviews, practical lessons, and notes from real ML work.',
   },
   {
-    title: 'Content and resources',
-    body: 'Find papers, guides, talks, implementation notes, and field-tested patterns worth your time.',
+    title: 'Curated resources',
+    body: 'Find papers, guides, talks, implementation notes, and field-tested patterns worth coming back to.',
   },
   {
-    title: 'Talks and events',
-    body: 'Follow community sessions, meetups, recordings, and future live programming as MLEN grows.',
+    title: 'Community sessions',
+    body: 'Follow talks, demos, recordings, reading groups, and future live programming as MLEN grows.',
   },
 ];
 
-const events = [
-  {
-    title: 'In-person meetups',
-    body: 'Local gatherings for ML builders to meet, share work, and trade practical notes from the field.',
-  },
-  {
-    title: 'Online sessions',
-    body: 'Remote talks, workshops, and community calls for members who want to participate from anywhere.',
-  },
-  {
-    title: 'Project demos',
-    body: 'Lightweight show-and-tell sessions where members can present what they are building and get feedback.',
-  },
-];
+const audience = [
+  'Machine learning engineers building production systems',
+  'Students and builders looking for practical direction',
+  'People exploring agentic workflows and modern ML tooling',
+] as const;
 
 const externalRel = 'noopener noreferrer';
 ---
@@ -71,22 +58,28 @@ const externalRel = 'noopener noreferrer';
       name="description"
       content="MLEN is a Discord community for machine learning engineers, students, builders, and practitioners."
     />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    />
     <title>MLEN | Machine Learning Engineering Network</title>
     <script is:inline>
       document.documentElement.classList.add('js');
     </script>
   </head>
   <body class="antialiased">
-    <header class="py-5">
-      <nav class="section-shell flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" aria-label="Main navigation">
-        <a href="/" class="header-link transition-colors duration-200 hover:text-leaf focus-visible:text-leaf">
-          Machine Learning Engineering Network
+    <header>
+      <nav class="section-shell site-nav" aria-label="Main navigation">
+        <a href="/" class="brand-link" aria-label="MLEN home">
+          <span class="brand-name">Machine Learning Engineering Network</span>
         </a>
-        <div class="flex w-full flex-wrap items-center justify-end gap-x-6 gap-y-3 sm:w-auto">
+        <div class="nav-links">
           {
             navLinks.map((link) => (
               <a
-                class="header-link transition-colors duration-200 hover:text-leaf focus-visible:text-leaf"
+                class="nav-link"
                 href={link.href}
                 target={link.external ? '_blank' : undefined}
                 rel={link.external ? externalRel : undefined}
@@ -99,34 +92,25 @@ const externalRel = 'noopener noreferrer';
       </nav>
     </header>
 
-    <main class="mt-8">
-      <section class="section-shell grid gap-12 py-20 md:grid-cols-[0.95fr_0.85fr] md:items-start lg:py-28">
-        <div class="reveal">
-          <h1 class="max-w-4xl text-[38px] font-bold leading-[1.04] text-ink sm:text-[50px] lg:text-[62px]">
-            The front door for ML engineers who want a practical community.
+    <main>
+      <section class="section-shell hero-section">
+        <div class="hero-copy reveal">
+          <h1>
+            A community for students and engineers that want to talk about applied Machine Learning
           </h1>
-          <p class="mt-6 max-w-2xl text-lg leading-8 text-muted sm:text-xl">
-            MLEN is a community for machine learning engineers, builders, and practitioners. Join for peer discussion,
-            useful content, and community events around real ML engineering work.
-          </p>
-          <a
-            href={externalLinks.discord}
-            target="_blank"
-            rel={externalRel}
-            class="group relative mt-8 inline-flex items-center justify-center overflow-hidden rounded-lg border-[3px] border-black bg-[#5ccbff] p-0.5 text-sm font-bold text-ink shadow-card transition hover:bg-[#35b8f5] hover:text-ink focus:outline-none focus:ring-4 focus:ring-[#5ccbff]/35"
-          >
-            <span class="relative inline-flex items-center gap-2 rounded-lg bg-[#5ccbff] px-5 py-3 leading-5 text-ink transition-all duration-75 ease-in group-hover:bg-[#35b8f5]">
+          <div class="hero-actions">
+            <a href={externalLinks.discord} target="_blank" rel={externalRel} class="button button-primary">
               Join Discord
               <svg
-                class="size-5"
+                class="button-icon"
                 viewBox="0 0 24 24"
                 fill="currentColor"
                 aria-hidden="true"
               >
                 <path d="M20.32 4.37A19.8 19.8 0 0 0 15.36 2.8a13.86 13.86 0 0 0-.64 1.31 18.38 18.38 0 0 0-5.44 0 12.6 12.6 0 0 0-.65-1.31 19.74 19.74 0 0 0-4.96 1.57C.54 9.03-.32 13.56.1 18.02a19.9 19.9 0 0 0 6.07 3.07 14.5 14.5 0 0 0 1.3-2.1 12.9 12.9 0 0 1-2.05-.98c.17-.13.34-.26.5-.4a14.18 14.18 0 0 0 12.16 0l.5.4c-.65.39-1.34.72-2.05.98.37.73.8 1.43 1.3 2.1a19.83 19.83 0 0 0 6.07-3.07c.5-5.17-.86-9.66-3.58-13.65ZM8.02 15.27c-1.18 0-2.15-1.08-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.2 0 2.17 1.1 2.15 2.42 0 1.34-.95 2.42-2.15 2.42Zm7.96 0c-1.18 0-2.15-1.08-2.15-2.42 0-1.33.95-2.42 2.15-2.42 1.2 0 2.17 1.1 2.15 2.42 0 1.34-.95 2.42-2.15 2.42Z" />
               </svg>
-            </span>
-          </a>
+            </a>
+          </div>
         </div>
 
         <div class="image-panel hero-logo-panel reveal" style="--reveal-delay: 120ms">
@@ -140,82 +124,102 @@ const externalRel = 'noopener noreferrer';
         </div>
       </section>
 
-      <section id="inside" class="section-shell py-20 sm:py-28">
+      <section id="inside" class="section-shell page-section">
         <div class="reveal">
           <p class="section-label">Inside the community</p>
           <h2 class="section-heading mt-4">
-            Useful conversations for the work between notebooks and production.
+            A focused space for the work between notebooks and production.
           </h2>
+          <p class="section-intro">
+            The goal is simple: make practical ML engineering less isolated and easier to learn from.
+          </p>
         </div>
-        <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="feature-grid">
           {
             features.map((feature, index) => (
               <article class="soft-card reveal" style={`--reveal-delay: ${index * 80}ms`}>
-                <div class="mb-5 h-1.5 w-12 rounded-full bg-leaf"></div>
-                <h3 class="text-xl font-bold text-ink">{feature.title}</h3>
-                <p class="mt-4 leading-7 text-muted">{feature.body}</p>
+                <div class="card-accent"></div>
+                <h3>{feature.title}</h3>
+                <p>{feature.body}</p>
               </article>
             ))
           }
         </div>
       </section>
 
-      <section id="event" class="section-shell py-20 sm:py-28">
-        <div class="reveal rounded-[2rem] bg-white px-5 py-8 shadow-soft sm:px-8 sm:py-12 lg:px-12">
-          <div class="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-            <div>
-              <p class="section-label">Events</p>
-              <h2 class="section-heading mt-4">
-                Community programming online and in person.
-              </h2>
-              <p class="mt-5 leading-7 text-muted">
-                Events are where MLEN turns discussion into shared context: talks, demos, meetups, reading groups, and
-                hands-on sessions around practical ML engineering.
-              </p>
-            </div>
-            <div class="grid gap-4">
-              {
-                events.map((event, index) => (
-                  <article class="reveal rounded-2xl border border-sky-line bg-surface p-5" style={`--reveal-delay: ${index * 80}ms`}>
-                    <h3 class="text-xl font-bold text-ink">{event.title}</h3>
-                    <p class="mt-2 leading-7 text-muted">{event.body}</p>
-                  </article>
-                ))
-              }
-            </div>
+      <section id="agentic-ml" class="section-band">
+        <div class="section-shell agentic-grid">
+          <div class="reveal">
+            <p class="section-label">Agentic ML</p>
+            <h2 class="section-heading mt-4">
+              Understand how LLMs are changing ML engineering workflows.
+            </h2>
+            <p class="section-intro">
+              MLEN also talks about agentic ML: how AI agents, new tooling, and automated workflows are changing the
+              way machine learning systems are built, evaluated, deployed, and maintained.
+            </p>
           </div>
+          <figure class="agentic-visual reveal" style="--reveal-delay: 120ms">
+            <img
+              src="/assets/agentic-ml-collaboration.png"
+              alt="Machine learning engineer working on a laptop with an AI robot assistant"
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
         </div>
       </section>
 
-      <section id="agentic-ml" class="section-shell py-20 sm:py-28">
-        <div class="reveal rounded-[2rem] bg-surface px-5 py-8 sm:px-8 sm:py-12 lg:px-12">
-          <p class="section-label">Agentic ML</p>
+      <section id="about" class="section-shell page-section about-grid">
+        <div class="about-copy reveal">
+          <p class="section-label">About MLEN</p>
           <h2 class="section-heading mt-4">
-            A space to understand how AI is changing ML engineering.
+            For people who want sharper judgment around practical ML engineering.
           </h2>
-          <p class="mt-5 max-w-5xl text-lg leading-8 text-muted">
-            MLEN also talks about agentic ML: how AI agents, new tooling, and automated workflows are changing the way
-            machine learning systems are built, evaluated, deployed, and maintained.
+          <p class="section-intro">
+            MLEN is for students, engineers and data professionals who want to compare notes, ask better questions,
+            share projects, and learn from real implementation work.
           </p>
+          <ul class="audience-list">
+            {
+              audience.map((item) => (
+                <li>{item}</li>
+              ))
+            }
+          </ul>
+        </div>
+
+        <div class="about-visual reveal" style="--reveal-delay: 120ms">
+          <BrainNetwork />
         </div>
       </section>
 
     </main>
 
-    <footer class="border-t border-sky-line py-8">
-      <div class="section-shell flex flex-col gap-4 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+    <footer>
+      <div class="section-shell footer-shell">
         <p>© 2026 MLEN</p>
-        <div class="flex flex-wrap gap-x-5 gap-y-2">
+        <div class="social-links">
           {
             socialLinks.map((link) => (
               <a
                 href={link.href}
                 target="_blank"
                 rel={externalRel}
-                class="font-semibold transition hover:text-ink"
+                class="social-link"
                 aria-label={`${link.label}: ${link.description}`}
               >
-                {link.label}
+                {
+                  link.icon === 'youtube' ? (
+                    <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8ZM9.6 15.5v-7l6.3 3.5-6.3 3.5Z" />
+                    </svg>
+                  ) : (
+                    <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M20.4 20.5h-3.6v-5.6c0-1.3 0-3-1.9-3s-2.1 1.4-2.1 2.9v5.7H9.3V9h3.4v1.6h.1c.5-.9 1.6-1.9 3.4-1.9 3.6 0 4.3 2.4 4.3 5.5v6.3ZM5.3 7.4a2.1 2.1 0 1 1 0-4.2 2.1 2.1 0 0 1 0 4.2ZM7 20.5H3.5V9H7v11.5ZM22.2 0H1.8C.8 0 0 .8 0 1.7v20.5C0 23.2.8 24 1.8 24h20.4c1 0 1.8-.8 1.8-1.8V1.7C24 .8 23.2 0 22.2 0Z" />
+                    </svg>
+                  )
+                }
               </a>
             ))
           }
@@ -260,6 +264,9 @@ const externalRel = 'noopener noreferrer';
         };
         window.addEventListener('pagehide', handlePageHide);
       })();
+    </script>
+    <script>
+      import '../scripts/brain-network-loader';
     </script>
   </body>
 </html>

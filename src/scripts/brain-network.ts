@@ -32,11 +32,11 @@ type RenderNode = BrainNode & {
 
 const nodeSizes = new Set<BrainNode['size']>(['small', 'medium', 'large']);
 const nodeTones = new Set<BrainNode['tone']>(['cyan', 'dark']);
-const accentEdgeKeys = new Set(['0-1', '3-4']);
+const accentEdgeKeys = new Set(['0-1', '0-2', '0-6']);
 const nodeRadius = {
-  small: 13,
-  medium: 20,
-  large: 31,
+  small: 19,
+  medium: 25,
+  large: 37,
 } satisfies Record<BrainNode['size'], number>;
 
 const colors = {
@@ -48,7 +48,10 @@ const colors = {
 };
 
 const maxPixelRatio = 1.5;
-const targetFrameInterval = 1000 / 30;
+const targetFrameInterval = 1000 / 30 - 2;
+const floatAmplitude = 7;
+const driftAmplitude = 4;
+const stageInsetRatio = 0.07;
 
 const isFiniteNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
 
@@ -100,22 +103,15 @@ const isBrainData = (value: unknown): value is BrainData => {
 
 const getEdgeKey = (sourceId: number, targetId: number) => [sourceId, targetId].sort((a, b) => a - b).join('-');
 
-const getNodeColor = (node: BrainNode, activeId: number) => {
-  if (node.interactive && node.id === activeId) {
-    return colors.active;
-  }
-
-  return node.tone === 'cyan' ? colors.cyan : colors.dark;
-};
+const getNodeColor = (node: BrainNode) => (node.tone === 'cyan' ? colors.cyan : colors.dark);
 
 export const mountBrainNetwork = () => {
   const dataElement = document.querySelector<HTMLScriptElement>('#brain-network-data');
-  const map = document.querySelector<HTMLElement>('.brain-map');
   const stage = document.querySelector<HTMLElement>('.brain-stage');
   const canvas = document.querySelector<HTMLCanvasElement>('[data-brain-canvas]');
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (!dataElement || !map || !stage || !canvas || canvas.dataset.engine === '2d-canvas') {
+  if (!dataElement || !stage || !canvas || canvas.dataset.engine === '2d-canvas') {
     return;
   }
 
@@ -139,9 +135,6 @@ export const mountBrainNetwork = () => {
     return;
   }
 
-  const overlayNodes = new Map<number, HTMLElement>();
-  const activeButton = map.querySelector<HTMLElement>('[data-topic-index].is-active');
-  let activeId = Number(activeButton?.dataset.topicIndex ?? 0);
   let frameId = 0;
   let isDisposed = false;
   let isPageVisible = document.visibilityState === 'visible';
@@ -157,21 +150,16 @@ export const mountBrainNetwork = () => {
 
   canvas.dataset.engine = '2d-canvas';
 
-  map.querySelectorAll<HTMLElement>('[data-brain-node-id]').forEach((element) => {
-    overlayNodes.set(Number(element.dataset.brainNodeId), element);
-  });
-
   const getRenderNodes = (time: number) => {
     const seconds = time * 0.001;
 
     return data.nodes.map((node): RenderNode => {
-      const float = prefersReducedMotion ? 0 : Math.sin(seconds * 0.48 + node.id * 0.62) * 8;
-      const drift = prefersReducedMotion ? 0 : Math.cos(seconds * 0.36 + node.id * 0.43) * 4;
-      const isActive = node.id === activeId;
+      const float = prefersReducedMotion ? 0 : Math.sin(seconds * 0.42 + node.id * 0.62) * floatAmplitude;
+      const drift = prefersReducedMotion ? 0 : Math.cos(seconds * 0.32 + node.id * 0.43) * driftAmplitude;
 
       return {
         ...node,
-        renderRadius: nodeRadius[node.size] * (isActive ? 1.18 : 1),
+        renderRadius: nodeRadius[node.size],
         renderX: node.x + drift,
         renderY: node.y + float,
       };
@@ -181,21 +169,7 @@ export const mountBrainNetwork = () => {
   const toCanvasX = (x: number) => metrics.offsetX + x * metrics.scale;
   const toCanvasY = (y: number) => metrics.offsetY + y * metrics.scale;
 
-  const updateOverlayPositions = (renderNodes: RenderNode[]) => {
-    renderNodes.forEach((node) => {
-      const element = overlayNodes.get(node.id);
-
-      if (!element) {
-        return;
-      }
-
-      element.style.setProperty('--x', `${(toCanvasX(node.renderX) / metrics.cssWidth) * 100}%`);
-      element.style.setProperty('--y', `${(toCanvasY(node.renderY) / metrics.cssHeight) * 100}%`);
-    });
-  };
-
   const drawLine = (source: RenderNode, target: RenderNode) => {
-    const isConnected = source.id === activeId || target.id === activeId;
     const isAccent = accentEdgeKeys.has(getEdgeKey(source.id, target.id));
 
     context.beginPath();
@@ -203,9 +177,9 @@ export const mountBrainNetwork = () => {
     context.lineTo(toCanvasX(target.renderX), toCanvasY(target.renderY));
     context.lineCap = 'round';
     context.lineJoin = 'round';
-    context.lineWidth = (isConnected ? 5 : 4) * metrics.scale;
-    context.globalAlpha = isConnected ? 0.94 : isAccent ? 0.88 : 0.72;
-    context.strokeStyle = isConnected || isAccent ? colors.active : colors.dark;
+    context.lineWidth = 4 * metrics.scale;
+    context.globalAlpha = isAccent ? 0.9 : 0.76;
+    context.strokeStyle = isAccent ? colors.active : colors.dark;
     context.stroke();
   };
 
@@ -213,31 +187,16 @@ export const mountBrainNetwork = () => {
     const x = toCanvasX(node.renderX);
     const y = toCanvasY(node.renderY);
     const radius = node.renderRadius * metrics.scale;
-    const isActive = node.id === activeId;
 
     context.globalAlpha = 1;
 
-    if (isActive) {
-      context.beginPath();
-      context.arc(x, y, radius + 8 * metrics.scale, 0, Math.PI * 2);
-      context.fillStyle = 'rgba(53, 184, 245, 0.16)';
-      context.fill();
-    }
-
     context.beginPath();
     context.arc(x, y, radius, 0, Math.PI * 2);
-    context.fillStyle = getNodeColor(node, activeId);
+    context.fillStyle = getNodeColor(node);
     context.fill();
     context.lineWidth = 3 * metrics.scale;
     context.strokeStyle = colors.white;
     context.stroke();
-
-    if (isActive) {
-      context.beginPath();
-      context.arc(x, y, radius * 0.42, 0, Math.PI * 2);
-      context.fillStyle = 'rgba(255, 255, 255, 0.22)';
-      context.fill();
-    }
   };
 
   const draw = (time = performance.now()) => {
@@ -264,7 +223,6 @@ export const mountBrainNetwork = () => {
 
     renderNodes.forEach(drawNode);
     context.restore();
-    updateOverlayPositions(renderNodes);
   };
 
   const resize = () => {
@@ -281,7 +239,10 @@ export const mountBrainNetwork = () => {
     canvas.height = Math.floor(cssHeight * pixelRatio);
     context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
-    const scale = Math.min(cssWidth / data.bounds.width, cssHeight / data.bounds.height);
+    const stageInset = cssWidth * stageInsetRatio;
+    const drawableWidth = Math.max(1, cssWidth - stageInset * 2);
+    const drawableHeight = Math.max(1, cssHeight - stageInset * 2);
+    const scale = Math.min(drawableWidth / data.bounds.width, drawableHeight / data.bounds.height);
 
     metrics = {
       cssHeight,
@@ -348,17 +309,6 @@ export const mountBrainNetwork = () => {
   );
   visibilityObserver.observe(stage);
 
-  const handleTopicChange = (event: Event) => {
-    const detail = (event as CustomEvent<{ activeId: number }>).detail;
-
-    if (typeof detail?.activeId !== 'number') {
-      return;
-    }
-
-    activeId = detail.activeId;
-    draw();
-  };
-
   const handleVisibilityChange = () => {
     isPageVisible = document.visibilityState === 'visible';
 
@@ -377,7 +327,6 @@ export const mountBrainNetwork = () => {
     isDisposed = true;
     stopAnimation();
 
-    map.removeEventListener('brain-topic-change', handleTopicChange);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
     window.removeEventListener('pagehide', handlePageHide);
     resizeObserver.disconnect();
@@ -394,7 +343,6 @@ export const mountBrainNetwork = () => {
     cleanup();
   };
 
-  map.addEventListener('brain-topic-change', handleTopicChange);
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
   resize();
